@@ -260,7 +260,7 @@ function makeGrid(arr, v_id, color2, color1 = "#646464", scene, f = 0.5) {
   return geomGroup;
 }
 
-export async function drawChart(chart, ch_options, keys) {
+export async function drawChart(chart, dy_options, keys) {
   // Update Chart on UI selector
   setTimeout(async function () {
     let filter = document.querySelector(".db_filter.active").id;
@@ -303,9 +303,36 @@ export async function drawChart(chart, ch_options, keys) {
     }
 
     const t_db = db[0].map((_, colIndex) => db.map((row) => row[colIndex])); // Transpose arrays for viz
-    await new Dygraph(chart, t_db, ch_options).updateOptions({
+    await new Dygraph(chart, t_db, dy_options).updateOptions({
       colors: colors_sel,
       labels: ["id", "d1", "d2", "d3", "d4", "d5", "d6"],
     });
   }, 0);
 }
+
+export function makeBaseGrid(scene, grid_res) {
+  // Draw base grid mesh
+  const dim = 0.25;
+  const geometry = new THREE.BoxGeometry(dim, 0, dim);
+  const edges = new THREE.EdgesGeometry(geometry);
+
+  const lines = new THREE.Group();
+  for (let x = 0; x < grid_res[0].X; x++) {
+    for (let z = 0; z < grid_res[0].Y; z++) {
+      const line = new THREE.LineSegments(
+        edges,
+        new THREE.LineBasicMaterial({
+          color: new THREE.Color("rgb(50,50,50)"),
+          linewidth: 0.1,
+        })
+      );
+      // line.position.set(dim, 0, dim); // Re-center on the corner
+      line.position.set(z * dim, 0, x * dim);
+      line.translateX(+dim / 2).translateZ(+dim / 2);
+      lines.add(line);
+    }
+  }
+  scene.add(lines);
+}
+
+export function makeProdBox(scene, prod_arr) {}

@@ -14,17 +14,6 @@ body {
   z-index: -9999999;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-*::-webkit-scrollbar {
-  display: none !important;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-* {
-  -ms-overflow-style: none !important; /* IE and Edge */
-  scrollbar-width: none !important; /* Firefox */
-}
-
 .ui.button.toggle.active {
   background-color: black !important;
 }
@@ -118,12 +107,12 @@ body {
   backdrop-filter: blur(5px);
 }
 
-.blur_bk_more.hidden {
-  animation: blur-out 0.5s forwards; /* Important */
+.blur_bk_more.blur_out {
+  animation: blur-out 0.3s both;
 }
 
-.blur_bk_more.show {
-  animation: blur-in 0.5s forwards; /* Important */
+.blur_bk_more.blur_in {
+  animation: blur-in 0.3s both;
 }
 
 @keyframes blur-in {
@@ -134,7 +123,6 @@ body {
     backdrop-filter: blur(20px);
   }
 }
-
 @keyframes blur-out {
   from {
     backdrop-filter: blur(20px);
@@ -146,6 +134,10 @@ body {
 
 .dygraph-label {
   color: white;
+}
+
+.dygraph-ylabel {
+  margin-top: 10px;
 }
 
 .dygraph-axis-label {
@@ -168,15 +160,33 @@ path {
 .ui_camera {
   position: absolute;
   top: 0px;
+  right: 120px;
+  margin: 30px;
+}
+
+.ui_focus {
+  position: absolute;
+  top: 0px;
+  right: 60px;
+  margin: 30px;
+}
+
+.ui_calendar {
+  position: absolute;
+  top: 0px;
   right: 0px;
   margin: 30px;
 }
 
+.calendar.popup::before {
+  display: none;
+}
+
 .ui_slider {
   position: relative;
-  top: 8px;
   margin: 0 10px;
   height: 8px;
+  vertical-align: middle;
 }
 
 .noUi-handle {
@@ -219,7 +229,41 @@ path {
   z-index: -9;
 }
 
+.no_pt {
+  pointer-events: none !important;
+}
+
 .bw {
   -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
   filter: grayscale(100%);
+}
+
+.carousel_cell {
+  margin: 30px;
+  background-color: white;
+  height: 80vh;
+}
+
+.rounded {
+  border-radius: 30px;
+}
+
+.chart_wrap {
+  position: relative;
+  width: 30vw;
+  height: 30vh;
+}
+
+.show {
+  display: block;
+}
+
+.not_show {
+  display: none;
+}
+
+.gradient {
+  background: linear-gradient(to right, #313131, #39ff14) !important;
+  height: 11px;
+  width: 100%;
 }

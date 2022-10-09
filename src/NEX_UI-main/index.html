@@ -15,6 +15,7 @@
     </style>
 
     <!-- SEMANTIC UI -->
+    <!-- Check the versions: currently importing v2.1 & v2.4, probably related to Calendar -->
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"
@@ -24,20 +25,25 @@
       integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
       crossorigin="anonymous"
     ></script>
+
+    <link
+      href="https://cdn.rawgit.com/mdehoog/Semantic-UI/6e6d051d47b598ebab05857545f242caf2b4b48c/dist/semantic.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <script src="https://cdn.rawgit.com/mdehoog/Semantic-UI/6e6d051d47b598ebab05857545f242caf2b4b48c/dist/semantic.min.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
 
     <!-- CHART.JS-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    
+    <script src="./modules/chartjs/chart.min.js"></script>
+
     <!-- DYGRAPH-->
     <script src="./modules/dygraph/dygraph.js"></script>
     <link rel="stylesheet" href="./modules/dygraph/dygraph.css" />
 
     <!--- SLIDER UI  --->
-    <link
-      href="./modules/nouislider/dist/nouislider.css"
-      rel="stylesheet"
-    />
+    <link href="./modules/nouislider/dist/nouislider.css" rel="stylesheet" />
     <script src="./modules/nouislider/dist/nouislider.js"></script>
 
     <!-- IUMPORTMAP FOR APP.JS DEPENDENCIES-->
@@ -45,11 +51,12 @@
       {
         "imports": {
           "three": "./modules/three/three.module.js",
-          "tween": "./modules/three/tween.module.js",
+          "tween": "./modules/three/Tween.js",
           "OrbitControls": "./modules/three/OrbitControls.js",
           "jsGradient": "./modules/js-gradient/index.js",
           "utils": "./modules/utils.js",
-          "chart": "./modules/chart.js"
+          "ch_utils": "./modules/ch_utils.js",
+          "dy_utils": "./modules/dy_utils.js"
         }
       }
     </script>
@@ -62,21 +69,19 @@
     <div id="ui_wrapper">
       <div class="menu_wrapper">
         <!-- Nav Bar-->
-        <div class="ui stackable container menu header" >
-          <div class="item" onclick="showTab('')">
+        <div class="ui stackable container menu header">
+          <div class="item left" onclick="showTab('')">
             <img src="./public/NEX_logo.png" width="100" />
           </div>
-          <a class="item right" onclick="showTab('layers')">Layers</a>
-          <a class="item" onclick="showTab('focus')">Focus</a>
-          <a class="item" onclick="showTab('insights')">Insights</a>
-          <a class="item" onclick="showTab('gathering')">Gathering</a>
+          <a class="item" onclick="showTab('layers')">Layers</a>
+          <a class="item" onclick="showTab('space')">Space</a>
+          <a class="item" onclick="showTab('insights')">Data</a>
+          <a class="item" onclick="showTab('gathering')">Info</a>
         </div>
       </div>
 
       <!-- Gathering section-->
       <div id="gathering" class="tab hidden">
-        <div class="full_page blur_bk_more z1">
-        </div>
         <div class="ui three column grid">
           <div class="column">
             <div class="ui fluid card">
@@ -88,9 +93,9 @@
               </div>
               <div class="ui content">
                 <div class="ui description">
-                  Lorem ipsum dolor sit, amet consectetur adipisicing elit. Soluta
-                  ex sit molestiae. Libero voluptate dolores aspernatur maiores
-                  labore optio ex deserunt? Eligendi rerum quod possimus
+                  Lorem ipsum dolor sit, amet consectetur adipisicing elit.
+                  Soluta ex sit molestiae. Libero voluptate dolores aspernatur
+                  maiores labore optio ex deserunt? Eligendi rerum quod possimus
                   praesentium iste id quam? Cupiditate.
                 </div>
               </div>
@@ -106,9 +111,9 @@
               </div>
               <div class="ui content">
                 <div class="description">
-                  Lorem ipsum dolor sit, amet consectetur adipisicing elit. Soluta
-                  ex sit molestiae. Libero voluptate dolores aspernatur maiores
-                  labore optio ex deserunt? Eligendi rerum quod possimus
+                  Lorem ipsum dolor sit, amet consectetur adipisicing elit.
+                  Soluta ex sit molestiae. Libero voluptate dolores aspernatur
+                  maiores labore optio ex deserunt? Eligendi rerum quod possimus
                   praesentium iste id quam? Cupiditate.
                 </div>
               </div>
@@ -124,9 +129,9 @@
               </div>
               <div class="ui content">
                 <div class="description">
-                  Lorem ipsum dolor sit, amet consectetur adipisicing elit. Soluta
-                  ex sit molestiae. Libero voluptate dolores aspernatur maiores
-                  labore optio ex deserunt? Eligendi rerum quod possimus
+                  Lorem ipsum dolor sit, amet consectetur adipisicing elit.
+                  Soluta ex sit molestiae. Libero voluptate dolores aspernatur
+                  maiores labore optio ex deserunt? Eligendi rerum quod possimus
                   praesentium iste id quam? Cupiditate.
                 </div>
               </div>
@@ -134,10 +139,10 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Layers section-->
       <div id="layers" class="ui_content tab hidden">
-        <div class="ui styled accordion">
+        <div class="ui styled accordion show" id="accordion_grid">
           <div id="gender" class="db_filter title active">
             <button class="ui button">Gender</button>
           </div>
@@ -147,12 +152,16 @@
                 <tr>
                   <td class="left aligned">Male</td>
                   <td>
+                    <div class="ui label" id="layers_lbl_0_0">%</div>
                     <i class="stop icon" style="color: #3e2cb0"></i>
                   </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Female</td>
-                  <td><i class="stop icon" style="color: #e64366"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_0_1">%</div>
+                    <i class="stop icon" style="color: #e64366"></i>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -164,55 +173,90 @@
             <table class="ui basic right aligned table">
               <tbody>
                 <tr>
-                  <td class="left aligned">Child</td>
+                  <!-- <tr> 
+                    <td>
+                      <i class="stop icon" style="color: #d1e028"></i>
+                      Kids
+                    </td>
+                    <td class="right aligned">
+                      <div class="ui label" id="layers_lbl_1_0">%</div>
+                    </td>
+                  </tr> -->
+                  <td class="left aligned">Kids</td>
                   <td>
+                    <div class="ui label" id="layers_lbl_1_0">%</div>
                     <i class="stop icon" style="color: #d1e028"></i>
                   </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Young</td>
-                  <td><i class="stop icon" style="color: #d8ac3d"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_1_1">%</div>
+                    <i class="stop icon" style="color: #d8ac3d"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Adult</td>
-                  <td><i class="stop icon" style="color: #df7751"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_1_2">%</div>
+                    <i class="stop icon" style="color: #df7751"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Elder</td>
-                  <td><i class="stop icon" style="color: #e64366"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_1_3">%</div>
+                    <i class="stop icon" style="color: #e64366"></i>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div id="group" class="db_filter title">
-            <button class="ui button">Group</button>
+            <button class="ui button">Ethnicity</button>
           </div>
           <div class="content">
             <table class="ui basic right aligned table">
               <tbody>
                 <tr>
                   <td class="left aligned">Caucasian</td>
-                  <td><i class="stop icon" style="color: #3e2cb0"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_2_0">%</div>
+                    <i class="stop icon" style="color: #3e2cb0"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Indian</td>
-                  <td><i class="stop icon" style="color: #d1e028"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_2_1">%</div>
+                    <i class="stop icon" style="color: #d1e028"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Middle Eastern</td>
-                  <td><i class="stop icon" style="color: #e64366"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_2_2">%</div>
+                    <i class="stop icon" style="color: #e64366"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Afro American</td>
-                  <td><i class="stop icon" style="color: #a243e6"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_2_3">%</div>
+                    <i class="stop icon" style="color: #a243e6"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Asian</td>
-                  <td><i class="stop icon" style="color: #e0283e"></i></td>
+                  <td>
+                    <div class="ui label" id="layers_lbl_2_4">%</div>
+                    <i class="stop icon" style="color: #e0283e"></i>
+                  </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Other</td>
                   <td>
+                    <div class="ui label" id="layers_lbl_2_5">%</div>
                     <i class="stop icon" style="color: #2cb0a8"></i>
                   </td>
                 </tr>
@@ -220,24 +264,74 @@
             </table>
           </div>
         </div>
+        <div class="ui styled accordion not_show" id="accordion_prod">
+          <div id="gaze" class="db_p_filter title active">
+            <button class="ui button">Gaze</button>
+          </div>
+          <div class="content active">
+            <table class="ui basic aligned table">
+              <tbody>
+                <tr>
+                  <td class="left two wide aligned">Min</td>
+                  <td class="six aligned">
+                    <div class="gradient"></div>
+                  </td>
+                  <td class="two wide right aligned">Max</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="object" class="db_p_filter title">
+            <button class="ui button">Focus</button>
+          </div>
+          <div class="content">
+            <table class="ui basic aligned table">
+              <tbody>
+                <tr>
+                  <td class="left two wide aligned">Min</td>
+                  <td class="six aligned">
+                    <div class="gradient"></div>
+                  </td>
+                  <td class="two wide right aligned">Max</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="interaction" class="db_p_filter title">
+            <button class="ui button">Interaction</button>
+          </div>
+          <div class="content">
+            <table class="ui basic aligned table">
+              <tbody>
+                <tr>
+                  <td class="left two wide aligned">Min</td>
+                  <td class="six aligned">
+                    <div class="gradient"></div>
+                  </td>
+                  <td class="two wide right aligned">Max</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <!-- Focus section-->
-      <div id="focus" class="ui_content tab hidden">
+      <!-- Space section-->
+      <div id="space" class="ui_content tab hidden">
         <div class="ui segment">
           <div class="content">
             <table class="ui basic aligned table">
               <tbody>
                 <tr>
-                  <td class="left aligned">Height</td>
-                  <td class="twelve wide"">
-                    <div class="ui_slider" id="sldCon_Height"></div>
+                  <td class="left aligned">Width</td>
+                  <td class="twelve wide">
+                    <div class="ui_slider" id="sldCon_Width"></div>
                   </td>
                 </tr>
-                <tr>
-                  <td class="left aligned">Width</td>
-                  <td class="twelve wide"">
-                    <div class="ui_slider" id="sldCon_Width"></div>
+                <tr id="row_Height">
+                  <td class="left aligned">Height</td>
+                  <td class="twelve wide">
+                    <div class="ui_slider" id="sldCon_Height"></div>
                   </td>
                 </tr>
               </tbody>
@@ -246,95 +340,170 @@
               <tbody>
                 <tr>
                   <td class="left aligned">Min/Max</td>
-                  <td class="twelve wide"">
+                  <td class="twelve wide">
                     <div class="ui_slider" id="sldRan_Clip"></div>
                   </td>
                 </tr>
                 <tr>
                   <td class="left aligned">Skew</td>
-                  <td class="twelve wide"">
+                  <td class="twelve wide">
                     <div class="ui_slider" id="sldCon_Skew"></div>
                   </td>
                 </tr>
               </tbody>
             </table>
-            <table class="ui basic aligned inverted table">
+            <table class="ui basic aligned inverted table fluid">
               <tbody>
-                
                 <tr>
-                  <td class="sixteen wide"">
-                    <div class="ui_slider" id="sldCon_Foc"></div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class=" sixteen wide ">
+                  <td class="sixteen wide">
                     <select class="ui fluid dropdown" id="drop_Foc">
                       <option value="">None</option>
                       <option value="dist1">Left expo</option>
                       <option value="dist2">Right expo</option>
                       <option value="dist3">Entrance</option>
-                  </select>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="sixteen wide">
+                    <div class="ui_slider" id="sldCon_Foc"></div>
                   </td>
                 </tr>
               </tbody>
             </table>
-             <button class="ui button" id="btn_reset">Reset</button>
+            <button class="ui button" id="btn_reset">Reset</button>
           </div>
         </div>
       </div>
 
       <!-- Insights section -->
       <div id="insights" class="tab hidden">
-        <div class="full_page blur_bk_more z1 hidden">
+        <div
+          class="ui floating clearable dropdown inverted basic button"
+          id="drop_Filt"
+        >
+          <i class="filter icon"></i>
+          <span class="text default">Filter</span>
+          <i class="dropdown icon"></i>
+          <div class="menu">
+            <div class="scrolling menu">
+              <div class="item" data-value="0_0">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #3e2cb0 !important"
+                ></div>
+                Male
+              </div>
+              <div class="item" data-value="0_1">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #e64366 !important"
+                ></div>
+                Female
+              </div>
+              <div class="divider"></div>
+              <div class="item" data-value="1_0">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #d1e028 !important"
+                ></div>
+                Kids
+              </div>
+              <div class="item" data-value="1_1">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #d8ac3d !important"
+                ></div>
+                Young
+              </div>
+              <div class="item" data-value="1_2">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #df7751 !important"
+                ></div>
+                Adult
+              </div>
+              <div class="item" data-value="1_3">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #e64366 !important"
+                ></div>
+                Elder
+              </div>
+              <div class="divider"></div>
+              <div class="item" data-value="2_0">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #3e2cb0 !important"
+                ></div>
+                Caucasian
+              </div>
+              <div class="item" data-value="2_1">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #d1e028 !important"
+                ></div>
+                Indian
+              </div>
+              <div class="item" data-value="2_2">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #e64366 !important"
+                ></div>
+                Middle Eastern
+              </div>
+              <div class="item" data-value="2_3">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #a243e6 !important"
+                ></div>
+                Afro American
+              </div>
+              <div class="item" data-value="2_4">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #e0283e !important"
+                ></div>
+                Asian
+              </div>
+              <div class="item" data-value="2_5">
+                <div
+                  class="ui empty circular label"
+                  style="background-color: #2cb0a8 !important"
+                ></div>
+                Other
+              </div>
+            </div>
+          </div>
         </div>
         <div class="ui fluid">
-          <div class="ui three column grid">
-            <div class="column"><canvas id="pie_Gen" width="400" height="100"></canvas>
-              <div class="ui basic segment center aligned inverted">
-                Gender
-              </div>
+          <div class="ui three column grid middle aligned">
+            <div class="column">
+              <canvas id="pie_Gen"></canvas>
+              <h5 class="ui center aligned header block basic">Gender</h5>
             </div>
-            <div class="column"><canvas id="pie_Age" width="400" height="100"></canvas>
-              <div class="ui basic segment center aligned inverted">
-                Age
-              </div>
+            <div class="column">
+              <canvas id="pie_Age"></canvas>
+              <h5 class="ui center aligned header block basic">Age</h5>
             </div>
-            <div class="column"><canvas id="pie_Grp" width="400" height="100"></canvas>
-              <div class="ui basic segment center aligned inverted">
-                Group
-              </div>
+            <div class="column">
+              <canvas id="pie_Grp"></canvas>
+              <h5 class="ui center aligned header block basic">Ethnicity</h5>
             </div>
           </div>
-          <div class="ui segment basic">
-            <div class="ui two basic buttons">
-              <button class="ui tiny basic dfc compact button" style="color: #3e2cb0 !important">Male</button>
-              <button class="ui tiny basic dfc compact button" style="color: #e64366 !important">Female</button>
-            </div>
-            <div class="ui four basic buttons">
-              <button class="ui tiny basic dfc compact button" style="color: #d1e028 !important">Child</button>
-              <button class="ui tiny basic dfc compact button" style="color: #d8ac3d !important">Young</button>
-              <button class="ui tiny basic dfc compact button" style="color: #df7751 !important">Adult</button>
-              <button class="ui tiny basic dfc compact button" style="color: #e64366 !important">Elder</button>
-            </div>
-            <div class="ui six basic buttons">
-              <button class="ui tiny basic dfc compact button" style="color: #3e2cb0 !important">Caucasian</button>
-              <button class="ui tiny basic dfc compact button" style="color: #d1e028 !important">Indian</button>
-              <button class="ui tiny basic dfc compact button" style="color: #e64366 !important">Middle Eastern</button>
-              <button class="ui tiny basic dfc compact button" style="color: #a243e6 !important">Afro American</button>
-              <button class="ui tiny basic dfc compact button" style="color: #e0283e !important">Asian</button>
-              <button class="ui tiny basic dfc compact button" style="color: #2cb0a8 !important">Other</button>
-            </div>
-
-          </div>
-       
         </div>
       </div>
+
+      <!-- Blurred background for modal effect -->
+      <div
+        class="full_page blur_bk_more blur_out z1 no_pt"
+        id="base_blur"
+      ></div>
     </div>
-  
 
     <!-- Threee -->
     <div id="canvas" class="z3"></div>
-    
+
     <!-- Chart -->
     <div class="ui content chart_container blur_bk z2">
       <div id="chart" class="sticky-bottom"></div>
@@ -342,15 +511,34 @@
 
     <!-- Cameras Toggle -->
     <div class="ui_camera z2">
-      <button class="ui big circular icon button active" id="tgl_camera">
+      <button
+        class="ui big circular icon button active secondary"
+        id="tgl_camera"
+      >
         <i class="cube icon"></i>
       </button>
+    </div>
+
+    <!-- Focus Toggle -->
+    <div class="ui_focus">
+      <button class="ui big circular icon button active" id="tgl_focus">
+        <i class="user icon"></i>
+      </button>
+    </div>
+
+    <!-- Calendar -->
+    <div class="ui_calendar">
+      <div class="ui calendar" id="calendar">
+        <button class="ui big circular icon button active">
+          <i class="calendar alternate outline icon"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Colophon-->
     <div class="logo">
       <a href="https://noumena.io/en/" target="_blank">
-        <img src="./public/Noumena_logo.png" alt="NOUMENA" width="200" />
+        <img src="./public/Noumena_logo.png" alt="NOUMENA" width="150" />
       </a>
     </div>
 
@@ -358,48 +546,51 @@
     <script>
       $(".ui.accordion").accordion();
       $(".ui.dropdown").dropdown();
-      
+
       $("#tgl_camera").click(function () {
         $(this).toggleClass("active");
         $(this).children(".icon").toggleClass("cube stop");
       });
+
+      $("#tgl_focus").click(function () {
+        $(this).children(".icon").toggleClass("user shopping bag");
+        $("#accordion_grid").toggleClass("show not_show");
+        $("#accordion_prod").toggleClass("show not_show");
+        $("#row_Height").toggleClass("disabled");
+      });
+
+      $("#calendar").calendar({ type: "date" });
     </script>
 
     <script>
       function showTab(id) {
         let tab;
         let tabs;
-        let idsBlur = ["insights", "gathering"]
-        tabs = document.querySelectorAll(".tab");
-        tabs.forEach( function(input) {
-          input.classList.add("hidden")
-        });
+        let idsBlur = ["insights", "gathering"];
+        let blur = document.getElementById("base_blur");
 
+        // Reset setting
+        tabs = document.querySelectorAll(".tab");
+        tabs.forEach(function (input) {
+          input.classList.add("hidden");
+        });
+        blur.classList.add("blur_out");
+        blur.classList.remove("blur_in");
+
+        // Selected visibility
         tab = document.getElementById(id);
         tab.classList.remove("hidden");
         tab.classList.add("visible");
 
-        idsBlur.forEach( function(idBlur) {
-
-          let tabBlur = document.getElementById(idBlur)    
-          let blur = tabBlur.getElementsByClassName("full_page")[0]
-
-          if (!blur.classList.contains("hidden")) {
-              blur.classList.add("hidden");
-              blur.classList.remove("show");
-            }
-
-          if (tabBlur.classList.contains("visible")) {
-            blur.classList.remove("hidden");
-            blur.classList.add("show");
-           }
-        
-
-        })
-        
+        // If matching the idsBlur activate blur
+        if (idsBlur.indexOf(id) > -1) {
+          blur.classList.remove("blur_out");
+          blur.classList.add("blur_in");
+        }
       }
     </script>
   </body>
 
+  <script type="module" src="./modules/sliders_init.js"></script>
   <script type="module" src="./app.js"></script>
 </html>
