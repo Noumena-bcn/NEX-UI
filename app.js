@@ -71,7 +71,7 @@ var ptCloud = await geomPTCloud(pt_arr, new THREE.Color("rgb(100,100,100))"));
 
 let camera_positions = [
   [-100, 100, -100], // ortho
-  [0, 100, -0.0000001],
+  [0, 100, -0.000000001],
 ];
 
 function init() {
@@ -95,7 +95,7 @@ function init() {
 
   tglCamera(); // Set initial position camera
   // Apply camera displacement to fit UI
-  scene.translateX(-10.5).translateZ(-5);
+  scene.translateX(-12.5).translateZ(-6);
 
   // Import Pointcloud
   scene.add(ptCloud);
@@ -679,9 +679,11 @@ function tglCamera() {
   // controls.enableDamping = true; // Set inertia on camera
   if (i == 1) {
     controls.enableRotate = false; // Remove rotation on planar view
-    scene.translateZ(-2);
-  } else {
     scene.translateZ(+2);
+  } else {
+    if (cam_i > 1) {
+      scene.translateZ(-2);
+    }
   }
 
   controls.mouseButtons = {

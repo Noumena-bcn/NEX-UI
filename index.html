@@ -176,30 +176,6 @@
           </table>
           <button class="ui button" id="btn_reset">Reset</button>
 
-          <!-- <div class="segment ui">
-            <button
-              class="ui button circular icon"
-              id=""
-              onclick="tglActive(this)"
-            >
-              <i class="ban icon"></i>
-            </button>
-            <button
-              class="ui button circular icon"
-              id="btn_heat"
-              onclick="tglActive(this)"
-            >
-              <i class="fire icon"></i>
-            </button>
-            <button
-              class="ui button circular icon"
-              id="btn_quad"
-              onclick="tglActive(this)"
-            >
-              <i class="expand icon"></i>
-            </button>
-          </div> -->
-
           <div class="ui segment secondary">
             <div
               id="t_chart"
@@ -216,7 +192,7 @@
           <div class="ui two wide column sub_menu">
             <div class="ui buttons vertical">
               <button
-                class="ui small circular icon inverted button"
+                class="ui small circular icon inverted button active"
                 onclick="show('costumer_heat'); tglActive(this)"
               >
                 <i class="bullseye icon"></i>
@@ -228,7 +204,7 @@
                 <i class="align right clockwise rotated icon"></i>
               </button>
               <button
-                class="ui small circular icon inverted button active"
+                class="ui small circular icon inverted button"
                 onclick="show('costumer_quad'); tglActive(this)"
               >
                 <i class="th icon"></i>
@@ -238,7 +214,9 @@
 
           <!-- Customers map-->
           <div class="ui column fourteen wide left">
-            <div id="costumer_heat" class="hidden"></div>
+            <!-- Heat -->
+            <div id="costumer_heat" class="block"></div>
+            <!-- Bars -->
             <div id="costumer_bar" class="hidden">
               <div class="ui styled accordion circular">
                 <div id="gender" class="db_filter title aligned active">
@@ -357,8 +335,8 @@
                 </div>
               </div>
             </div>
-
-            <div id="costumer_quad" class="block">
+            <!-- Quad -->
+            <div id="costumer_quad" class="hidden">
               <!-- Filter -->
               <div
                 class="ui floating clearable dropdown inverted basic button"
