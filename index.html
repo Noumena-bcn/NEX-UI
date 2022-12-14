@@ -36,8 +36,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
 
-    <script src="./modules/js_fun.js"></script>
-
     <!-- CHART.JS-->
     <script src="./modules/chartjs/chart.min.js"></script>
 
@@ -45,11 +43,17 @@
     <script src="./modules/dygraph/dygraph.js"></script>
     <link rel="stylesheet" href="./modules/dygraph/dygraph.css" />
 
+    <!-- HEATMAP -->
+    <script src="./modules/heatmap/heatmap.js"></script>
+
+    <!-- QUADTREE -->
+    <script src="https://cdn.jsdelivr.net/npm/@timohausmann/quadtree-js/quadtree.min.js"></script>
+
     <!--- SLIDER UI  --->
     <link href="./modules/nouislider/dist/nouislider.css" rel="stylesheet" />
     <script src="./modules/nouislider/dist/nouislider.js"></script>
 
-    <!-- IUMPORTMAP FOR APP.JS DEPENDENCIES-->
+    <!-- IMPORTMAP FOR APP.JS DEPENDENCIES-->
     <script type="importmap">
       {
         "imports": {
@@ -59,13 +63,15 @@
           "jsGradient": "./modules/js-gradient/index.js",
           "utils": "./modules/utils.js",
           "ch_utils": "./modules/ch_utils.js",
-          "dy_utils": "./modules/dy_utils.js"
+          "dy_utils": "./modules/dy_utils.js",
+          "three-octree-vertices": "./modules/three-octree-vertices.js"
         }
       }
     </script>
 
-    <!-- LOCAL STYLE -->
+    <!-- LOCAL STYLE & FUNCTIONS -->
     <link href="styles/main.css" rel="stylesheet" type="text/css" />
+    <script src="./modules/js_fun.js"></script>
   </head>
 
   <body id="body">
@@ -76,7 +82,7 @@
         <div class="left floated ui">
           <button
             onclick="show('customers'); blurOut(); tglActive(this)"
-            class="ui button big head_btns inverted active"
+            class="ui button big head_btns active inverted"
           >
             CUSTOMERS
           </button>
@@ -169,6 +175,31 @@
             </tbody>
           </table>
           <button class="ui button" id="btn_reset">Reset</button>
+
+          <!-- <div class="segment ui">
+            <button
+              class="ui button circular icon"
+              id=""
+              onclick="tglActive(this)"
+            >
+              <i class="ban icon"></i>
+            </button>
+            <button
+              class="ui button circular icon"
+              id="btn_heat"
+              onclick="tglActive(this)"
+            >
+              <i class="fire icon"></i>
+            </button>
+            <button
+              class="ui button circular icon"
+              id="btn_quad"
+              onclick="tglActive(this)"
+            >
+              <i class="expand icon"></i>
+            </button>
+          </div> -->
+
           <div class="ui segment secondary">
             <div
               id="t_chart"
@@ -179,135 +210,269 @@
       </div>
 
       <!-- CUSTOMERS Section ---------------------------------------------------------------------------->
-      <div class="ui active block ui_content" id="customers">
-        <!-- Customers map-->
-        <div class="ui styled accordion circular">
-          <div id="gender" class="db_filter title aligned active">
-            <button class="ui button">Gender</button>
-            <i class="dropdown icon f-right"></i>
+      <div class="ui block ui_content" id="customers">
+        <!-- Sub buttons -->
+        <div class="ui grid fluid">
+          <div class="ui two wide column sub_menu">
+            <div class="ui buttons vertical">
+              <button
+                class="ui small circular icon inverted button"
+                onclick="show('costumer_heat'); tglActive(this)"
+              >
+                <i class="bullseye icon"></i>
+              </button>
+              <button
+                class="ui small circular icon inverted button"
+                onclick="show('costumer_bar'); tglActive(this)"
+              >
+                <i class="align right clockwise rotated icon"></i>
+              </button>
+              <button
+                class="ui small circular icon inverted button active"
+                onclick="show('costumer_quad'); tglActive(this)"
+              >
+                <i class="th icon"></i>
+              </button>
+            </div>
           </div>
-          <div class="content active">
-            <table class="ui basic right aligned table">
-              <tbody>
-                <tr>
-                  <td class="left aligned">Male</td>
-                  <td>
-                    <div class="ui label layers_lbl_0_0">%</div>
-                    <i class="stop icon" style="color: #3e2cb0"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Female</td>
-                  <td>
-                    <div class="ui label layers_lbl_0_1">%</div>
-                    <i class="stop icon" style="color: #e64366"></i>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div id="age" class="db_filter title">
-            <button class="ui button">Age</button>
-            <i class="dropdown icon f-right"></i>
-          </div>
-          <div class="content">
-            <table class="ui basic right aligned table">
-              <tbody>
-                <tr>
-                  <td class="left aligned">Kids</td>
-                  <td>
-                    <div class="ui label layers_lbl_1_0">%</div>
-                    <i class="stop icon" style="color: #d1e028"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Young</td>
-                  <td>
-                    <div class="ui label layers_lbl_1_1">%</div>
-                    <i class="stop icon" style="color: #d8ac3d"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Adult</td>
-                  <td>
-                    <div class="ui label layers_lbl_1_2">%</div>
-                    <i class="stop icon" style="color: #df7751"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Elder</td>
-                  <td>
-                    <div class="ui label layers_lbl_1_3">%</div>
-                    <i class="stop icon" style="color: #e64366"></i>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div id="group" class="db_filter title">
-            <button class="ui button">Ethnicity</button>
-            <i class="dropdown icon f-right"></i>
-          </div>
-          <div class="content">
-            <table class="ui basic right aligned table">
-              <tbody>
-                <tr>
-                  <td class="left aligned">Caucasian</td>
-                  <td>
-                    <div class="ui label layers_lbl_2_0">%</div>
-                    <i class="stop icon" style="color: #3e2cb0"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Indian</td>
-                  <td>
-                    <div class="ui label layers_lbl_2_1">%</div>
-                    <i class="stop icon" style="color: #d1e028"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Middle Eastern</td>
-                  <td>
-                    <div class="ui label layers_lbl_2_2">%</div>
-                    <i class="stop icon" style="color: #e64366"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Afro American</td>
-                  <td>
-                    <div class="ui label layers_lbl_2_3">%</div>
-                    <i class="stop icon" style="color: #a243e6"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Asian</td>
-                  <td>
-                    <div class="ui label layers_lbl_2_4">%</div>
-                    <i class="stop icon" style="color: #e0283e"></i>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="left aligned">Other</td>
-                  <td>
-                    <div class="ui label layers_lbl_2_5">%</div>
-                    <i class="stop icon" style="color: #2cb0a8"></i>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+
+          <!-- Customers map-->
+          <div class="ui column fourteen wide left">
+            <div id="costumer_heat" class="hidden"></div>
+            <div id="costumer_bar" class="hidden">
+              <div class="ui styled accordion circular">
+                <div id="gender" class="db_filter title aligned active">
+                  <button class="ui button">Gender</button>
+                  <i class="dropdown icon f-right"></i>
+                </div>
+                <div class="content active">
+                  <table class="ui basic right aligned table">
+                    <tbody>
+                      <tr>
+                        <td class="left aligned">Male</td>
+                        <td>
+                          <div class="ui label layers_lbl_0_0">%</div>
+                          <i class="stop icon" style="color: #3e2cb0"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Female</td>
+                        <td>
+                          <div class="ui label layers_lbl_0_1">%</div>
+                          <i class="stop icon" style="color: #e64366"></i>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="age" class="db_filter title">
+                  <button class="ui button">Age</button>
+                  <i class="dropdown icon f-right"></i>
+                </div>
+                <div class="content">
+                  <table class="ui basic right aligned table">
+                    <tbody>
+                      <tr>
+                        <td class="left aligned">Kids</td>
+                        <td>
+                          <div class="ui label layers_lbl_1_0">%</div>
+                          <i class="stop icon" style="color: #d1e028"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Young</td>
+                        <td>
+                          <div class="ui label layers_lbl_1_1">%</div>
+                          <i class="stop icon" style="color: #d8ac3d"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Adult</td>
+                        <td>
+                          <div class="ui label layers_lbl_1_2">%</div>
+                          <i class="stop icon" style="color: #df7751"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Elder</td>
+                        <td>
+                          <div class="ui label layers_lbl_1_3">%</div>
+                          <i class="stop icon" style="color: #e64366"></i>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="group" class="db_filter title">
+                  <button class="ui button">Ethnicity</button>
+                  <i class="dropdown icon f-right"></i>
+                </div>
+                <div class="content">
+                  <table class="ui basic right aligned table">
+                    <tbody>
+                      <tr>
+                        <td class="left aligned">Caucasian</td>
+                        <td>
+                          <div class="ui label layers_lbl_2_0">%</div>
+                          <i class="stop icon" style="color: #3e2cb0"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Indian</td>
+                        <td>
+                          <div class="ui label layers_lbl_2_1">%</div>
+                          <i class="stop icon" style="color: #d1e028"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Middle Eastern</td>
+                        <td>
+                          <div class="ui label layers_lbl_2_2">%</div>
+                          <i class="stop icon" style="color: #e64366"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Afro American</td>
+                        <td>
+                          <div class="ui label layers_lbl_2_3">%</div>
+                          <i class="stop icon" style="color: #a243e6"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Asian</td>
+                        <td>
+                          <div class="ui label layers_lbl_2_4">%</div>
+                          <i class="stop icon" style="color: #e0283e"></i>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="left aligned">Other</td>
+                        <td>
+                          <div class="ui label layers_lbl_2_5">%</div>
+                          <i class="stop icon" style="color: #2cb0a8"></i>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div id="costumer_quad" class="block">
+              <!-- Filter -->
+              <div
+                class="ui floating clearable dropdown inverted basic button"
+                id="quad_filt"
+              >
+                <i class="filter icon"></i>
+                <span class="text default">Filter</span>
+                <i class="dropdown icon"></i>
+                <div class="menu">
+                  <div class="scrolling menu">
+                    <div class="item" data-value="0_0">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #3e2cb0 !important"
+                      ></div>
+                      Male
+                    </div>
+                    <div class="item" data-value="0_1">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #e64366 !important"
+                      ></div>
+                      Female
+                    </div>
+                    <div class="divider"></div>
+                    <div class="item" data-value="1_0">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #d1e028 !important"
+                      ></div>
+                      Kids
+                    </div>
+                    <div class="item" data-value="1_1">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #d8ac3d !important"
+                      ></div>
+                      Young
+                    </div>
+                    <div class="item" data-value="1_2">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #df7751 !important"
+                      ></div>
+                      Adult
+                    </div>
+                    <div class="item" data-value="1_3">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #e64366 !important"
+                      ></div>
+                      Elder
+                    </div>
+                    <div class="divider"></div>
+                    <div class="item" data-value="2_0">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #3e2cb0 !important"
+                      ></div>
+                      Caucasian
+                    </div>
+                    <div class="item" data-value="2_1">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #d1e028 !important"
+                      ></div>
+                      Indian
+                    </div>
+                    <div class="item" data-value="2_2">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #e64366 !important"
+                      ></div>
+                      Middle Eastern
+                    </div>
+                    <div class="item" data-value="2_3">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #a243e6 !important"
+                      ></div>
+                      Afro American
+                    </div>
+                    <div class="item" data-value="2_4">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #e0283e !important"
+                      ></div>
+                      Asian
+                    </div>
+                    <div class="item" data-value="2_5">
+                      <div
+                        class="ui empty circular label"
+                        style="background-color: #2cb0a8 !important"
+                      ></div>
+                      Other
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
         <!-- Customers stats-->
         <div class="ui statistics stats inverted floated bottom no_pt">
+          <div class="ui statistic r_spaced">
+            <div class="label sublbl">18 (+10%)</div>
+            <div class="value l_a curr_cl"></div>
+            <div class="label lbl">visits</div>
+          </div>
           <div class="ui statistic r_spaced">
             <div class="label sublbl">21,0% (+0,79%)</div>
             <div class="value l_a">22,4%</div>
             <div class="label lbl">conversion</div>
-          </div>
-          <div class="ui statistic r_spaced">
-            <div class="label sublbl">2 (=)</div>
-            <div class="value l_a">2</div>
-            <div class="label lbl">units</div>
           </div>
           <div class="ui statistic r_spaced">
             <div class="label sublbl">49.8$ (+14.10)</div>
@@ -315,14 +480,14 @@
             <div class="label lbl">AVG ticket</div>
           </div>
           <div class="ui statistic r_spaced">
+            <div class="label sublbl">2 (=)</div>
+            <div class="value l_a">2</div>
+            <div class="label lbl">units</div>
+          </div>
+          <div class="ui statistic r_spaced">
             <div class="label sublbl">7004$ (+8.13%)</div>
             <div class="value l_a">8830$</div>
             <div class="label lbl">sales</div>
-          </div>
-          <div class="ui statistic r_spaced">
-            <div class="label sublbl">18 (+10%)</div>
-            <div class="value l_a curr_cl"></div>
-            <div class="label lbl">visits</div>
           </div>
         </div>
       </div>
@@ -686,10 +851,16 @@
           src="./public/nex_brand_logo.png"
           alt="NEX"
           height="100%"
-          width="250px"
+          width="150px"
         />
       </div>
     </div>
+
+    <!-- Canvas for Heatmap -->
+    <div id="heat_container"></div>
+
+    <!-- Canvas for Quad -->
+    <canvas id="quad_container"></canvas>
 
     <!-- Blurred background for modal effect -->
     <div class="full_page blur_bk_more blur_out z1 no_pt" id="base_blur"></div>

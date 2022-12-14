@@ -14,6 +14,11 @@ function show(id) {
       }
     });
   }
+  // else {
+  //   // Keep active
+  //   elem.classList.toggle("block");
+  //   elem.classList.toggle("hidden");
+  // }
 }
 
 function showHandles() {
@@ -74,6 +79,9 @@ function tglActive(elem) {
   if (!elem.classList.contains("active")) {
     elem.classList.add("active");
   }
+  // else {
+  //   elem.classList.remove("active");
+  // }
 
   let siblings = getSiblings(elem);
   siblings.forEach(function (input) {
@@ -201,6 +209,4 @@ function changeProd(id) {
   document.getElementById(card["interaction"]).style.width = String(
     prod["interaction"]
   ).concat("%");
-
-  console.log(document.getElementById(card["img"]));
 }

@@ -15,10 +15,6 @@ body {
   z-index: -9999999;
 }
 
-/* .ui.button.toggle.active {
-  background-color: black !important;
-} */
-
 .ui {
   border-radius: 15px !important;
 }
@@ -290,10 +286,10 @@ path {
 
 .full_page {
   position: absolute;
-  margin-top: -100vh;
-  margin-left: -100vw;
-  height: 1000vh;
-  width: 1000vw;
+  margin-top: -500vh;
+  margin-left: -500vw;
+  height: 2000vh;
+  width: 2000vw;
   z-index: -9;
 }
 
@@ -385,4 +381,8 @@ path {
 
 .w {
   color: white;
+}
+
+#heat_container {
+  display: hidden;
 }

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Octree } from "three-octree-vertices";
 import { TWEEN } from "https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js";
 import { OrbitControls } from "OrbitControls";
 import { Gradient } from "jsGradient";
@@ -12,9 +13,6 @@ import {
   makeBaseGrid,
 } from "utils";
 import { drawPies } from "ch_utils";
-// import { drawChart } from "dy_utils";;
-
-import { Clock, NoToneMapping } from "three";
 
 let scene, renderer, camera, controls, ambientlight;
 let bars, boxes, aspect;
@@ -23,6 +21,7 @@ var tChart = document.querySelector("#t_chart");
 var rChart = document.querySelector("#r_chart");
 const dummy = new THREE.Object3D(); // Dummmy geom for instance mesh
 const dammy = new THREE.Object3D(); // Dummmy geom for instance mesh
+const quaddy = new THREE.Object3D(); // Dummmy geom for instance mesh
 const keys = ["gender", "age", "group"]; // Data layers
 const subdiv = [2, 4, 6]; // Grid subdivision factor per data layer
 
@@ -57,6 +56,10 @@ let sldSkew = document.getElementById("sldCon_Skew");
 let sldFoc = document.getElementById("sldCon_Foc");
 
 let idsGridProd = ["customers", "products"];
+
+let heatBtn = document.getElementById("costumer_heat");
+let barBtn = document.getElementById("costumer_bar");
+let quadBtn = document.getElementById("costumer_quad");
 let timeBtn = document.getElementById("tgl_vis");
 let reportBtn = document.getElementById("r_btn_flow");
 timeBtn.addEventListener("click", drawTimeChart);
@@ -67,7 +70,7 @@ const amount_p = prod_arr.length;
 var ptCloud = await geomPTCloud(pt_arr, new THREE.Color("rgb(100,100,100))"));
 
 let camera_positions = [
-  [-100, 100, -100],
+  [-100, 100, -100], // ortho
   [0, 100, -0.0000001],
 ];
 
@@ -80,7 +83,10 @@ function init() {
   aspect = width / height;
 
   // Base settings
-  renderer = new THREE.WebGLRenderer({ alpha: false, antialias: true });
+  renderer = new THREE.WebGLRenderer({
+    alpha: false,
+    antialias: true,
+  });
   renderer.setSize(width, height);
   canvas.appendChild(renderer.domElement);
 
@@ -111,9 +117,9 @@ function init() {
   scene.add(bars);
 
   // Initiate mesh box instances
-  w = 0.05;
-  d = 0.05;
-  h = 0.05;
+  w = 0.03;
+  d = 0.03;
+  h = 0.03;
 
   geometry = new THREE.BoxGeometry(w, h, d);
   material = new THREE.MeshBasicMaterial({
@@ -143,6 +149,233 @@ function init() {
   scene.add(line);
 }
 
+let plane;
+let canvasHeat = document.getElementById("heat_container");
+let heatmapInstance;
+
+async function initHeatMap() {
+  let canvasDims = [0.25 * grid_res[0].X, 0.25 * grid_res[0].Y];
+
+  heatmapInstance = h337.create({
+    container: canvasHeat,
+    backgroundColor: "#141414",
+    height: canvasDims[0] * 10,
+    width: canvasDims[1] * 10,
+    radius: 10,
+    maxOpacity: 1,
+    minOpacity: 0.5,
+    blur: 0.95,
+    gradient: {
+      // enter n keys between 0 and 1 here
+      // for gradient color customization
+      ".0": "#141414",
+      ".5": "blue",
+      ".8": "red",
+      ".95": "yellow",
+    },
+  });
+
+  const texture = new THREE.CanvasTexture(canvasHeat.firstChild);
+
+  const geom = new THREE.PlaneGeometry(canvasDims[1], canvasDims[0], 1, 1);
+  geom.rotateX(-Math.PI * 0.5); // horizontal
+  geom.translate(canvasDims[1] / 2, 0, canvasDims[0] / 2);
+
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+  });
+
+  plane = new THREE.Mesh(geom, material);
+  scene.add(plane);
+}
+
+async function updateHeatMap() {
+  let toggle =
+    document.getElementById(idsGridProd[0]).classList.contains("block") *
+    heatBtn.classList.contains("block");
+  let detections = grid_vals;
+  detections = detections.slice(time_range[0], time_range[1]); // Slice with time range
+
+  let dataPoints = [];
+  let cMax = 0;
+  if (toggle) {
+    let cells_id = [];
+    for (const detection of detections) {
+      cells_id.push(detection.id);
+    }
+    // Count occurencies per id
+    let counts = [...Array(grid_arr.length)].map((x) => 0);
+    for (const num of cells_id) {
+      counts[num] = counts[num] + 1;
+    }
+    let value;
+
+    for (let i = 0; i < grid_arr.length; i++) {
+      if (counts[i] != 0) {
+        value = counts[i];
+
+        dataPoints.push({
+          x: Math.round(Number(grid_arr[i].X) * 10),
+          y: Math.round(Number(grid_arr[i].Z) * 10),
+          value: value,
+        });
+      } else {
+        continue;
+      }
+    }
+
+    cMax = Math.max(...Object.values(counts)); // Extract max occurencies for color gradient
+  }
+  heatmapInstance.setData({
+    max: cMax * 4,
+    min: 0,
+    data: dataPoints,
+  });
+  // Update plane material map
+  plane.material.map.needsUpdate = true;
+}
+
+let quadPlane;
+let canvasQuad = document.getElementById("quad_container");
+let tree;
+
+async function drawQuadtree(node, color) {
+  let ctx = canvasQuad.getContext("2d");
+  let bounds = node.bounds;
+  let lineWidth = sldWidth.noUiSlider.get() * 2; // Width exaggerating factor
+
+  //no subnodes? draw the current node
+  if (node.nodes.length === 0) {
+    ctx.strokeStyle = String(color);
+
+    ctx.lineWidth = lineWidth;
+    ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+    //has subnodes? drawQuadtree them!
+  } else {
+    for (let i = 0; i < node.nodes.length; i++) {
+      drawQuadtree(node.nodes[i], color);
+    }
+  }
+}
+
+async function emptyCanvas() {
+  let canvasDims = [0.25 * grid_res[0].X, 0.25 * grid_res[0].Y];
+  var ctx = canvasQuad.getContext("2d");
+
+  let w = canvasDims[0] * 100;
+  let y = canvasDims[1] * 100;
+
+  canvasQuad.width = y;
+  canvasQuad.height = w;
+  ctx.width = window.innerWidth;
+  ctx.height = window.innerHeight;
+  ctx.clearRect(0, 0, y, w);
+}
+
+async function initQuadTree() {
+  let canvasDims = [0.25 * grid_res[0].X, 0.25 * grid_res[0].Y];
+
+  tree = new Quadtree(
+    {
+      x: 0,
+      y: 0,
+      width: canvasDims[1] * 100,
+      height: canvasDims[0] * 100,
+    },
+    20, //max objects
+    6 //max subd
+  );
+  emptyCanvas();
+
+  const texture = new THREE.CanvasTexture(canvasQuad);
+
+  const geom = new THREE.PlaneGeometry(canvasDims[1], canvasDims[0], 1, 1);
+  geom.rotateX(-Math.PI * 0.5); // horizontal
+  geom.translate(canvasDims[1] / 2, 0, canvasDims[0] / 2);
+
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+  });
+
+  quadPlane = new THREE.Mesh(geom, material);
+  scene.add(quadPlane);
+}
+
+async function updateQuadTree() {
+  let toggle =
+    document.getElementById(idsGridProd[0]).classList.contains("block") *
+    quadBtn.classList.contains("block");
+
+  // Clear tree before appending
+  tree.clear();
+  emptyCanvas();
+
+  let color = "white";
+
+  if (toggle) {
+    let detections = grid_vals;
+    detections = detections.slice(time_range[0], time_range[1]); // Slice with time range
+
+    let filter = $("#quad_filt").dropdown("get value"); // Filter focus key
+    let id_map = filter.split("_"); // Array with key and value matching the selected filter
+    const titles = ["gender", "age", "group"];
+
+    let cells_id = [];
+    if (filter != "") {
+      // Mask values based on filter
+      const key = titles[id_map[0]];
+      // Prepare filtered values
+      for (const detection of detections) {
+        if (detection[key] == id_map[1]) {
+          cells_id.push(detection.id);
+        }
+      }
+      color = colors[key][id_map[1]];
+    } else {
+      for (const detection of detections) {
+        cells_id.push(detection.id);
+      }
+    }
+    // Count occurencies per id
+    let counts = [...Array(grid_arr.length)].map((x) => 0);
+    for (const num of cells_id) {
+      counts[num] = counts[num] + 1;
+    }
+
+    let value, point;
+    let points = [];
+
+    for (let i = 0; i < grid_arr.length; i++) {
+      if (counts[i] != 0) {
+        value = counts[i];
+
+        for (let j = 0; j < value; j++) {
+          point = {
+            x: Math.round(Number(grid_arr[i].X) * 100),
+            y: Math.round(Number(grid_arr[i].Z) * 100),
+            width: 10,
+            height: 10,
+          };
+
+          tree.insert(point);
+          points.push(points);
+        }
+      } else {
+        continue;
+      }
+      // drawObjects(points);
+    }
+    // Draw tree
+    drawQuadtree(tree, color);
+  }
+
+  // Update plane material map
+  quadPlane.material.map.needsUpdate = true;
+}
+
 function updateGrid() {
   filter_grid = document.querySelector(".db_filter.active").id;
 
@@ -155,9 +388,9 @@ function updateGrid() {
   let fac_Sk = sldSkew.noUiSlider.get(); // Skewing factor
   let key_foc = $("#drop_Foc").dropdown("get value"); // Filter focus key
   let filt_foc = sldFoc.noUiSlider.get(); // Filter focus distance
-  let toggle = document
-    .getElementById(idsGridProd[0])
-    .classList.contains("block");
+  let toggle =
+    document.getElementById(idsGridProd[0]).classList.contains("block") *
+    barBtn.classList.contains("block");
 
   let labels = [
     ["layers_lbl_0_0", "layers_lbl_0_1"],
@@ -257,8 +490,8 @@ function updateGrid() {
               scaleXZ = (counts[id] / cMax) * fac_W + 1;
               color = gradient.getColor(counts[id]); // Extract color gradient
             } else {
-              scaleY = 0.05;
-              scaleXZ = 1;
+              scaleY = 0.01;
+              scaleXZ = 0.2;
               color = "#7f7f7f";
             }
 
@@ -405,11 +638,11 @@ function updateProd() {
 }
 
 function render() {
-  let bool = document
-    .getElementById(idsGridProd[0])
-    .classList.contains("block");
-  updateGrid();
   updateProd();
+  updateGrid();
+  updateHeatMap();
+  updateQuadTree();
+
   controls.update();
   renderer.render(scene, camera);
 }
@@ -423,6 +656,8 @@ let cam_i = 0; // Iterative for toggle click
 function tglCamera() {
   const D = [7, 6];
   let i = cam_i % 2;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
 
   let d = D[i];
   camera = new THREE.OrthographicCamera(
@@ -433,6 +668,8 @@ function tglCamera() {
     1,
     2000
   );
+
+  // camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
   camera.position.set(...camera_positions[i]);
 
   // Set the center of pivot for the orbit at volume centroid
@@ -456,10 +693,8 @@ function tglCamera() {
   controls.update();
   cam_i++;
 }
+
 document.querySelector("#tgl_camera").addEventListener("click", tglCamera);
-// document
-//   .querySelectorAll(".db_filter")
-//   .forEach((input) => input.addEventListener("click", drawChart));
 
 // ---------------------------- Insights charts
 
@@ -528,7 +763,6 @@ var dy_t_options = {
     // Replace values of customers
     let ppl = new Set(ppl_arr);
     let label_ppl = document.querySelectorAll(".curr_cl");
-    console.log(label_ppl);
     label_ppl.forEach(function (lbl) {
       lbl.textContent = ppl.size;
     });
@@ -739,6 +973,8 @@ async function drawTimeChart() {
 // ---------------------------------------------------------------------------------------------- INIT
 init();
 makeBaseGrid(scene, grid_res);
+initHeatMap();
+initQuadTree();
 drawTimeChart();
 drawReportChart();
 drawPies(grid_vals, keys, colors, subdiv);
