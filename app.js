@@ -239,7 +239,7 @@ async function updateHeatMap() {
 let quadPlane;
 let canvasQuad = document.getElementById("quad_container");
 let tree;
-
+let globAlpha = 0.2;
 async function drawQuadtree(node, color) {
   let ctx = canvasQuad.getContext("2d");
   let bounds = node.bounds;
@@ -247,10 +247,17 @@ async function drawQuadtree(node, color) {
 
   //no subnodes? draw the current node
   if (node.nodes.length === 0) {
+    ctx.globalAlpha = 1;
     ctx.strokeStyle = String(color);
+    ctx.fillStyle = String(color);
 
     ctx.lineWidth = lineWidth;
     ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+    if (node.level >= 3) {
+      ctx.globalAlpha = (node.level - 3) * 0.3;
+      ctx.fillRect(bounds.x, bounds.y, bounds.width, bounds.height); // fill with rect
+    }
 
     //has subnodes? drawQuadtree them!
   } else {
